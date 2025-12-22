@@ -1,0 +1,37 @@
+# Workspace directory (contains user's working files)
+workspace/
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Documentation (not needed in image)
+README.md
+*.md
+
+# Scripts (not copied to image)
+run.sh
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Editor temporary files
+*.swp
+*.swo
+*~
+.*.sw?
+
+# Logs
+*.log
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Docker files (not needed in build context)
+.dockerignore
