@@ -139,9 +139,9 @@ brew install fswatch
 
 音声通知機能は既にリポジトリ内に設定済みです：
 
-1. **Docker設定**: `docker-config/settings.json` にNotificationフックが設定されています
+1. **Docker設定**: `config/settings.json` にNotificationフックが設定されています
 2. **run.sh**: 通知ファイルを共有するボリュームマウントが設定されています
-3. **監視スクリプト**: `watch-claude-notify.sh` が用意されています
+3. **監視スクリプト**: `scripts/watch-notify.sh` が用意されています
 
 ### 使用方法
 
