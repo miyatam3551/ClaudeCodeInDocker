@@ -17,13 +17,60 @@ claude CLI の `--dangerously-skip-permissions` オプションは、ファイ�
 
 ## セットアップ
 
-### 1. Docker イメージのビルド
+### 1. 設定ファイルのセットアップ
+
+このリポジトリには、`.config/claude/` ディレクトリに以下の設定ファイルが含まれています：
+
+- `settings.json`: Claude CLI の設定（権限、フック、出力スタイルなど）
+- `CLAUDE.md`: プロジェクト固有の指示やルール
+- `.mcp.json.template`: MCP サーバーの設定テンプレート
+
+これらのファイルをカスタマイズして使用してください。
+
+#### MCP サーバーの設定
+
+初回セットアップ時に、MCP サーバーを使用する場合は以下のコマンドを実行してください：
+
+```bash
+# テンプレートから .mcp.json を作成
+cp .config/claude/.mcp.json.template .config/claude/.mcp.json
+
+# 必要に応じて .mcp.json を編集
+vim .config/claude/.mcp.json
+```
+
+`.mcp.json` ファイルは `.gitignore` に含まれているため、Git で追跡されません。プロジェクト固有の MCP サーバー設定をカスタマイズできます。
+
+#### オプション A: リポジトリ内の設定ファイルをそのまま使う（推奨）
+
+何もする必要はありません。Docker コンテナが自動的にこれらのファイルを使用します。
+
+#### オプション B: ホスト側の設定ファイルを使う
+
+ホスト側の `~/.config/claude/` にある設定ファイルを使いたい場合は、シンボリックリンクを作成します：
+
+```bash
+# リポジトリ内の設定ファイルを削除（または名前を変更してバックアップ）
+mv .config/claude/settings.json .config/claude/settings.json.sample
+mv .config/claude/CLAUDE.md .config/claude/CLAUDE.md.sample
+
+# ホスト側の設定ファイルへのシンボリックリンクを作成
+ln -s ~/.config/claude/settings.json .config/claude/settings.json
+ln -s ~/.config/claude/CLAUDE.md .config/claude/CLAUDE.md
+
+# MCP サーバー設定もシンボリックリンクする場合（オプション）
+ln -s ~/.config/claude/.mcp.json .config/claude/.mcp.json
+```
+
+**注意**: シンボリックリンクを使用する場合、ホスト側の設定ファイルへの変更がリポジトリに反映されます。
+
+### 2. Docker イメージのビルド
 
 ```bash
 docker build -t claudecode-docker .
 ```
 
-### 2. workspace ディレクトリの作成
+### 3. workspace ディレクトリの作成
 
 作業ディレクトリを作成します：
 
@@ -31,7 +78,7 @@ docker build -t claudecode-docker .
 mkdir -p workspace
 ```
 
-### 3. 初回ログイン
+### 4. 初回ログイン
 
 初回のみ、コンテナ内で claude CLI にログインする必要があります。
 
@@ -42,10 +89,7 @@ mkdir -p workspace
 mkdir -p ~/.config/claude
 
 # コンテナを起動してログイン
-docker run -it --rm \
-  -v "$(pwd)/workspace:/home/claude/workspace" \
-  -v "${HOME}/.config/claude:/home/claude/.config/claude" \
-  claudecode-docker claude login
+docker run -it --rm -v "$(pwd)/workspace:/home/claude/workspace" -v "${HOME}/.config/claude:/home/claude/.config/claude" claudecode-docker claude login
 ```
 
 ブラウザが開くので、Claude subscription アカウントでログインしてください。認証が完了すると、`~/.config/claude/` に認証情報が保存されます。
@@ -57,25 +101,23 @@ docker run -it --rm \
 workspace ディレクトリをコンテナ内にマウントして claude CLI を実行します：
 
 ```bash
-docker run -it --rm \
-  -v "$(pwd)/workspace:/home/claude/workspace" \
-  -v "${HOME}/.config/claude:/home/claude/.config/claude" \
-  claudecode-docker
+docker run -it --rm -v "$(pwd)/workspace:/home/claude/workspace" -v "${HOME}/.config/claude:/home/claude/.config/claude" claudecode-docker
 ```
 
 ### 注意事項
 
 - **workspace ディレクトリ**: コンテナ内の `/home/claude/workspace` にマウントされ、すべての作業ファイルがここに保存されます
+- **設定ファイル**:
+  - Docker イメージには、リポジトリ内の `.config/claude/settings.json` と `CLAUDE.md` がデフォルト設定としてコピーされています
+  - ホスト側の `~/.config/claude` をマウントすると、認証情報（`.credentials.json`）が共有され、ログイン状態が保持されます
+  - マウントされた設定ファイル（ホスト側）がある場合は、それがイメージ内の設定を上書きします
 - **設定ファイルの更新**: claude CLI は起動時に設定ファイル（`.claude.json`）を更新するため、認証情報ディレクトリは**読み書き可能**でマウントする必要があります
 - **作業ディレクトリ**: コンテナ起動時は自動的に `/home/claude/workspace` ディレクトリにいます
 
 ### 異なる workspace を使用する場合
 
 ```bash
-docker run -it --rm \
-  -v "/path/to/your/workspace:/home/claude/workspace" \
-  -v "${HOME}/.config/claude:/home/claude/.config/claude" \
-  claudecode-docker
+docker run -it --rm -v "/path/to/your/workspace:/home/claude/workspace" -v "${HOME}/.config/claude:/home/claude/.config/claude" claudecode-docker
 ```
 
 ## エイリアスの設定（オプション）
@@ -118,11 +160,7 @@ claudecode-safe
 ファイルの所有者がコンテナ内のユーザーと一致しない場合、権限エラーが発生することがあります。以下のコマンドで権限を調整できます：
 
 ```bash
-docker run -it --rm \
-  -v "$(pwd)/workspace:/home/claude/workspace" \
-  -v "${HOME}/.config/claude:/home/claude/.config/claude" \
-  --user "$(id -u):$(id -g)" \
-  claudecode-docker
+docker run -it --rm -v "$(pwd)/workspace:/home/claude/workspace" -v "${HOME}/.config/claude:/home/claude/.config/claude" --user "$(id -u):$(id -g)" claudecode-docker
 ```
 
 ### 認証エラーが発生する場合
@@ -136,10 +174,7 @@ ls -la ~/.config/claude
 認証情報が期限切れまたは破損している場合は、再度ログインしてください：
 
 ```bash
-docker run -it --rm \
-  -v "$(pwd)/workspace:/home/claude/workspace" \
-  -v "${HOME}/.config/claude:/home/claude/.config/claude" \
-  claudecode-docker claude login
+docker run -it --rm -v "$(pwd)/workspace:/home/claude/workspace" -v "${HOME}/.config/claude:/home/claude/.config/claude" claudecode-docker claude login
 ```
 
 ## ライセンス

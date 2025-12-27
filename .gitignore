@@ -39,3 +39,26 @@ Temporary Items
 # Environment files (if any secrets are stored)
 .env
 .env.local
+
+# Claude config - 認証情報や個人データは除外
+.config/claude/.credentials.json
+.config/claude/.claude.json
+.config/claude/.claude.json.backup
+.config/claude/history.jsonl
+.config/claude/session-env/
+.config/claude/debug/
+.config/claude/file-history/
+.config/claude/plans/
+.config/claude/projects/
+.config/claude/shell-snapshots/
+.config/claude/stats-cache.json
+.config/claude/statsig/
+.config/claude/telemetry/
+.config/claude/todos/
+.config/claude/plugins/
+.config/claude/.mcp.json
+
+# Keep these config files (tracked in git)
+!.config/claude/settings.json
+!.config/claude/CLAUDE.md
+!.config/claude/.mcp.json.template
