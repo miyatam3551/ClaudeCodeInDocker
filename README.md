@@ -120,6 +120,53 @@ docker run -it --rm -v "$(pwd)/workspace:/home/claude/workspace" -v "${HOME}/.co
 docker run -it --rm -v "/path/to/your/workspace:/home/claude/workspace" -v "${HOME}/.config/claude:/home/claude/.config/claude" claudecode-docker
 ```
 
+## 音声通知機能（オプション）
+
+Docker環境でのClaude Code実行時に、VOICEVOX（ホスト側）を使って音声通知を受け取ることができます。
+
+### 前提条件
+
+- macOS環境
+- [VOICEVOX](https://voicevox.hiroshiba.jp/)がホスト側で起動していること（デフォルトポート50021）
+- [fswatch](https://github.com/emcrisostomo/fswatch)がインストールされていること
+
+```bash
+# fswatch のインストール（Homebrewを使用）
+brew install fswatch
+```
+
+### セットアップ
+
+音声通知機能は既にリポジトリ内に設定済みです：
+
+1. **Docker設定**: `docker-config/settings.json` にNotificationフックが設定されています
+2. **run.sh**: 通知ファイルを共有するボリュームマウントが設定されています
+3. **監視スクリプト**: `watch-claude-notify.sh` が用意されています
+
+### 使用方法
+
+1. **VOICEVOXを起動**（ホスト側）
+
+2. **Claude Codeを起動**（ワンコマンド）
+
+```bash
+./run.sh
+```
+
+これだけで、音声通知監視も自動的にバックグラウンドで起動し、Claude Codeがツールを使用するたびに音声通知が流れます。
+
+**注意**: `./run.sh`を実行すると、監視スクリプトも自動的に起動します。Docker終了時（Ctrl+C）には監視スクリプトも自動的に停止します。
+
+### 動作の仕組み
+
+1. Docker内のClaude CodeがNotificationフックを実行
+2. `host.docker.internal:50021` を通してホストのVOICEVOXにアクセス
+3. 生成された音声ファイルを `notify/notify.wav` に保存
+4. ホスト側の `fswatch` がファイル変更を検知
+5. `afplay` で音声を再生し、ファイルを削除
+
+**注意**: この仕組みはリポジトリ内で完結しており、ホスト側のファイルシステムを汚染しません。
+
 ## エイリアスの設定（オプション）
 
 頻繁に使用する場合は、シェルのエイリアスを設定すると便利です。

@@ -36,6 +36,9 @@ Temporary Items
 # Docker
 *.log
 
+# Notification files
+notify/*.wav
+
 # Environment files (if any secrets are stored)
 .env
 .env.local
